@@ -17,6 +17,7 @@ export const addPost = createAction('blog/addPost', (post: Omit<IPost, 'id'>) =>
     }
   }
 })
+
 export const deletePost = createAction<String>('blog/deletePost')
 export const startEditingPost = createAction<String>('blog/startEditingPost')
 export const cancelEditingPost = createAction('blog/cancelEditingPost')
