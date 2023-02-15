@@ -1,5 +1,5 @@
 import { addPost, cancelEditingPost, finishEditingPost } from 'pages/blog/blog.slice'
-import { RootState } from 'pages/store'
+import { RootState } from 'store'
 import { Fragment, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { IPost } from 'types/blog.type'
