@@ -1,7 +1,8 @@
-import { addPost, cancelEditingPost, finishEditingPost } from 'pages/blog/blog.slice'
-import { RootState } from 'pages/store'
+import { unwrapResult } from '@reduxjs/toolkit'
+import { addPost, cancelEditingPost, finishEditingPost, updatePost } from 'pages/blog/blog.slice'
+import { RootState, useAppDispatch } from 'store'
 import { Fragment, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { IPost } from 'types/blog.type'
 
 const initialState: IPost = {
@@ -12,19 +13,61 @@ const initialState: IPost = {
   title: '',
   id: ''
 }
+
+interface ErrorForm {
+  publishDate: string
+}
+
 const CreatePost = () => {
   const [formData, setFormData] = useState<IPost>(initialState)
-  const dispatch = useDispatch()
-  const editingPost = useSelector((state: RootState) => state.blog.editingPost)
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const dispatch = useAppDispatch()
+  const { editingPost, loading } = useSelector((state: RootState) => state.blog)
+  const [errorForm, setErrorForm] = useState<null | ErrorForm>(null)
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    //xử lý  theo promise
     if (editingPost) {
-      dispatch(finishEditingPost(formData))
-    } else {
-      const formDataWithId = { ...formData }
-      dispatch(addPost(formDataWithId))
+      //dispatch: đóng gói, unwrap để mở gói
+      dispatch(updatePost({ postId: editingPost.id, body: formData }))
+        .unwrap()
+        .then((res) => {
+          setFormData(initialState)
+          if (errorForm) {
+            setErrorForm(null)
+          }
+        })
+        .catch((error) => {
+          setErrorForm(error.error)
+        })
     }
-    setFormData(initialState)
+    //else xử lý  theo async function
+    else {
+      try {
+        await dispatch(addPost(formData)).unwrap()
+        //unwrapResult(res) // khi gặp lỗi sẽ nhảy cào catch
+        setFormData(initialState)
+        if (errorForm) {
+          setErrorForm(null)
+        }
+      } catch (error: any) {
+        setErrorForm(error.error)
+      }
+    }
+    //xử lý theo promise
+    // else {
+    //   dispatch(addPost(formData))
+    //     .unwrap()
+    //     .then((res) => {
+    //       setFormData(initialState)
+    //       if (errorForm) {
+    //         setErrorForm(null)
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       setErrorForm(error.error)
+    //     })
+    // }
   }
   useEffect(() => {
     setFormData(editingPost ?? initialState)
@@ -80,7 +123,13 @@ const CreatePost = () => {
         </div>
       </div>
       <div className='mb-6'>
-        <label htmlFor='publishDate' className='mb-2 block text-sm font-medium text-gray-900 dark:text-gray-300'>
+        <label
+          htmlFor='publishDate'
+          className={`mb-2 block text-sm font-medium  dark:text-gray-300 ${
+            errorForm?.publishDate ? 'text-red-700' : 'text-gray-900'
+          }`}
+        >
+          {' '}
           Publish Date
         </label>
         <input

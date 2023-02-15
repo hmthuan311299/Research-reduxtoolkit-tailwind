@@ -1,21 +1,30 @@
 import PostItem from '../postItem'
-import { useSelector, useDispatch } from 'react-redux'
-import { RootState } from 'pages/store'
-import { deletePost, startEditingPost } from 'pages/blog/blog.slice'
+import { useSelector } from 'react-redux'
+import { RootState, useAppDispatch } from 'store'
+import { deletePost, startEditingPost, getPostList } from 'pages/blog/blog.slice'
+import { useEffect } from 'react'
+import SkeletonPost from '../SkeletonPost'
+import React from 'react'
 
 const PostList = () => {
-  const dispatch = useDispatch()
-  const postList = useSelector((state: RootState) => state.blog.postList)
+  const dispatch = useAppDispatch()
+  const { postList, loading } = useSelector((state: RootState) => state.blog)
   const handleDelete = (postId: string) => {
     dispatch(deletePost(postId))
   }
-
   const handleStartEditingPost = (postId: string) => {
     dispatch(startEditingPost(postId))
   }
+
+  useEffect(() => {
+    const promise = dispatch(getPostList())
+    return () => {
+      promise.abort()
+    }
+  }, [dispatch])
+
   return (
     <div>
-      div class="bg-white py-6 sm:py-8 lg:py-12"&gt;
       <div className='mx-auto max-w-screen-xl px-4 md:px-8'>
         <div className='mb-10 md:mb-16'>
           <h2 className='mb-4 text-center text-2xl font-bold text-gray-800 md:mb-6 lg:text-3xl'>Được Dev Blog</h2>
@@ -24,14 +33,21 @@ const PostList = () => {
           </p>
         </div>
         <div className='grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-2 xl:grid-cols-2 xl:gap-8'>
-          {postList.map((post) => (
-            <PostItem
-              key={post.id}
-              post={post}
-              handleDelete={handleDelete}
-              handleStartEditing={handleStartEditingPost}
-            />
-          ))}
+          {loading && (
+            <React.Fragment>
+              <SkeletonPost />
+              <SkeletonPost />
+            </React.Fragment>
+          )}
+          {!loading &&
+            postList.map((post) => (
+              <PostItem
+                key={post.id}
+                post={post}
+                handleDelete={handleDelete}
+                handleStartEditing={handleStartEditingPost}
+              />
+            ))}
         </div>
       </div>
     </div>
